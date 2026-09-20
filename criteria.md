@@ -65,4 +65,4 @@ information that directly supports the answer that was produced.
 
 **Why this target:**
 Simply displaying a source name is not enough if the cited document does not support the answer. Because each of my five questions has a specific answer in the city guide corpus, I expect every generated answer to be traceable to at least one retrieved source document.
-     ───────────────────────────────────────────────────────────────────────── -->
+ 
