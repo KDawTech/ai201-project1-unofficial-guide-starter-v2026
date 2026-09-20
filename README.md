@@ -84,23 +84,36 @@ cards only.
 
 ## Sample Answer
 
-<!-- Milestone 4: We will replace this after testing retrieval. -->
-
-**Question:**
+**Question:** How many railway services run to Brightwater on Sundays?
 
 **Answer:**
 
 ```text
+Six railway services run to Brightwater on Sundays (guide_regional_transport.md).
 
+Sources retrieved: guide_kestrelford.md, guide_marchwood.md, guide_regional_transport.md, guide_thornby_wells.md
 ```
 
-**My relevance cutoff:**
+**My relevance cutoff:** 0.62
 
-<!-- Milestone 4: We will add the cutoff and all ten retrieval distances here. -->
+I chose a relevance cutoff of 0.62 after comparing the best retrieval
+distances for my five in-corpus questions against five clearly out-of-scope
+questions. The in-corpus distances ranged from 0.2576 to 0.4865, while the
+out-of-scope distances ranged from 0.7542 to 0.8990. There was a clear gap
+between 0.4865 and 0.7542, so I selected 0.62 near the middle of that gap.
 
 | Question | In corpus? | Best distance |
-|---|---|---|
-|  |  |  |
+|---|---|---:|
+| How often does the bus to Kestrelford run on weekdays? | Yes | 0.2576 |
+| What time does Kestrelford's bakery usually sell out? | Yes | 0.4450 |
+| Which town is easiest for visitors with limited mobility? | Yes | 0.4865 |
+| How many railway services run to Brightwater on Sundays? | Yes | 0.2701 |
+| What time should visitors arrive at Halden Bay in August to avoid parking problems? | Yes | 0.2928 |
+| What is the capital of Mongolia? | No | 0.7542 |
+| How do I change the oil in a diesel engine? | No | 0.8917 |
+| Who won the 1994 World Cup? | No | 0.8990 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.8459 |
+| How do I write a for loop in Rust? | No | 0.8130 |
 
 ## How I Used AI
 
