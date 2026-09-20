@@ -82,22 +82,51 @@ def fallback_split(
 
 def split_documents(documents: list[Document]) -> list[Chunk]:
     """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    Split the city guide documents by Markdown sections.
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
-
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
-
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
+    Each ## heading and the text below it stay together so that chunks
+    preserve complete topics instead of cutting sentences at fixed
+    character positions.
     """
-    return fallback_split(documents)
+    chunks: list[Chunk] = []
+
+    for doc in documents:
+        sections: list[str] = []
+        current_section: list[str] = []
+
+        for line in doc.text.splitlines():
+            stripped = line.strip()
+
+            # A new level-2 heading starts a new semantic section.
+            if stripped.startswith("## "):
+                if current_section:
+                    section_text = "\n".join(current_section).strip()
+                    if section_text:
+                        sections.append(section_text)
+
+                current_section = [stripped]
+            else:
+                current_section.append(line)
+
+        # Save the final section in the document.
+        if current_section:
+            section_text = "\n".join(current_section).strip()
+            if section_text:
+                sections.append(section_text)
+
+        # Convert each section into a Chunk object.
+        for index, section_text in enumerate(sections):
+            chunks.append(
+                Chunk(
+                    text=section_text,
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
+    return fallback_split(documents)        
 
 
 def describe(chunks: list[Chunk]) -> str:
