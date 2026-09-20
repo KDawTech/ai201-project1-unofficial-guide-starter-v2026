@@ -117,12 +117,21 @@ between 0.4865 and 0.7542, so I selected 0.62 near the middle of that gap.
 
 ## How I Used AI
 
-<!-- Milestone 5: We will complete this with two specific examples. -->
+**1.** I used AI while setting up the project when the dependencies failed to
+install with Python 3.12. The error showed that `chroma-hnswlib` was trying to
+build from source and required Microsoft C++ Build Tools. AI helped me identify
+that Python 3.11 was already installed on my computer and suggested recreating
+the virtual environment with Python 3.11 instead. I followed that approach,
+reinstalled the requirements, and `python test.py` then passed all 10
+environment checks.
 
-**1.**
-
-**2.**
-
+**2.** I used AI while redesigning the chunking strategy after inspecting the
+starter chunks. The starter's fixed-size chunks sometimes began or ended in the
+middle of sentences. AI suggested using the Markdown structure of the
+`city_guides` documents instead. I changed `split_documents` so that it splits
+at `##` section headings and uses no overlap. After rebuilding the index, the
+sample chunks contained complete sections and were produced by
+`chunker.py::split_documents`.
 ---
 
 # Unit 2
