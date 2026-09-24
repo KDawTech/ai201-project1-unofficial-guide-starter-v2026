@@ -16,7 +16,8 @@ rest of the project if they were wrong:
    dimensions — but it arrives as an ONNX build from Chroma's own CDN, so the
    install needs neither PyTorch nor a reachable Hugging Face. See `_embedder`.
 """
-
+import re
+from rank_bm25 import BM25Okapi
 import os
 import shutil
 from dataclasses import dataclass
@@ -184,6 +185,82 @@ def search(
     corpus: str | None = None,
     variant: str = "default",
 ) -> list[Result]:
+    """
+    Hybrid retrieval using semantic similarity plus BM25 keyword search.
+
+    Semantic retrieval is good at matching meaning, while BM25 helps when a
+    question contains exact names, numbers, or terms. The two scores are
+    normalized and combined to rank the final results.
+    """
+    top_k = top_k or config.TOP_K
+    name = config.collection_name(corpus, variant)
+
+    try:
+        collection = _client().get_collection(name)
+    except Exception as exc:
+        raise RuntimeError(
+            f"No index called '{name}'. Run `python app.py index` first."
+        ) from exc
+
+    count = collection.count()
+
+    # Get semantic distances for every chunk in this small corpus.
+    raw = collection.query(
+        query_embeddings=embed([question]),
+        n_results=count,
+    )
+
+    documents = raw["documents"][0]
+    metadatas = raw["metadatas"][0]
+    distances = raw["distances"][0]
+
+    # Tokenize all chunks and the question for BM25 keyword search.
+    def tokenize(text: str) -> list[str]:
+        return re.findall(r"\b\w+\b", text.lower())
+
+    tokenized_documents = [tokenize(text) for text in documents]
+    tokenized_question = tokenize(question)
+
+    bm25 = BM25Okapi(tokenized_documents)
+    bm25_scores = bm25.get_scores(tokenized_question)
+
+    # Normalize BM25 scores to the range 0-1.
+    max_bm25 = max(bm25_scores) if len(bm25_scores) else 0.0
+
+    ranked = []
+
+    for text, meta, distance, bm25_score in zip(
+        documents, metadatas, distances, bm25_scores
+    ):
+        distance = float(distance)
+
+        # Cosine distance: lower is better.
+        # Convert it to a similarity score where higher is better.
+        semantic_score = max(0.0, min(1.0, 1.0 - distance))
+
+        keyword_score = (
+            float(bm25_score) / max_bm25
+            if max_bm25 > 0
+            else 0.0
+        )
+
+        # Equal weighting between meaning and exact keyword matching.
+        hybrid_score = (0.5 * semantic_score) + (0.5 * keyword_score)
+
+        result = Result(
+            text=text,
+            source=str(meta.get("source", "unknown")),
+            label=f"{meta.get('source', 'unknown')}#{meta.get('index', 0)}",
+            distance=distance,
+            produced_by=str(meta.get("produced_by", "unknown")),
+        )
+
+        ranked.append((hybrid_score, result))
+
+    ranked.sort(key=lambda item: item[0], reverse=True)
+
+    return [result for _, result in ranked[:top_k]]
+
     """
     Retrieve the chunks closest in meaning to a question.
 
